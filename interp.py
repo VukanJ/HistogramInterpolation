@@ -47,32 +47,32 @@ def interp_fast(h1: LinHist, h2: LinHist, alpha: float) -> LinHist:
     f /= D
     return LinHist(x1 * (1-alpha) + alpha* x2, f)
 
-def interp_high_precision(h1: LinHist, h2: LinHist, alpha: float, precision=100) -> LinHist:
-    assert len(h1) == len(h2)
-    assert len(h1.x) == len(h2.x)
+# def interp_high_precision(h1: LinHist, h2: LinHist, alpha: float, precision=100) -> LinHist:
+#     assert len(h1) == len(h2)
+#     assert len(h1.x) == len(h2.x)
 
-    cdf1 = h1.cdf()
-    cdf2 = h2.cdf()
+#     cdf1 = h1.cdf()
+#     cdf2 = h2.cdf()
 
-    yspace = np.linspace(0, 1, precision)
-    xspace = np.linspace(h1.x[0], h1.x[-1], precision)
+#     yspace = np.linspace(0, 1, precision)
+#     xspace = np.linspace(h1.x[0], h1.x[-1], precision)
 
-    x1 = LinHist(cdf1.y, cdf1.x).eval(yspace)
-    x2 = LinHist(cdf2.y, cdf2.x).eval(yspace)
+#     x1 = LinHist(cdf1.y, cdf1.x).eval(yspace)
+#     x2 = LinHist(cdf2.y, cdf2.x).eval(yspace)
 
-    f1_x1 = LinHist(xspace, h1.eval(xspace)).eval(x1)
-    f2_x2 = LinHist(xspace, h2.eval(xspace)).eval(x2)
+#     f1_x1 = LinHist(xspace, h1.eval(xspace)).eval(x1)
+#     f2_x2 = LinHist(xspace, h2.eval(xspace)).eval(x2)
 
-    f = f1_x1 * f2_x2
-    D = (1.0 - alpha) * f2_x2 + alpha * f1_x1
-    D[D == 0] = 1
-    f /= D
-    return LinHist(x1 * (1-alpha) + alpha* x2, f)
+#     f = f1_x1 * f2_x2
+#     D = (1.0 - alpha) * f2_x2 + alpha * f1_x1
+#     D[D == 0] = 1
+#     f /= D
+#     return LinHist(x1 * (1-alpha) + alpha* x2, f)
 
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
-    data1 = np.random.normal(loc=-1.3, scale=0.25, size=100000)
-    data2 = np.random.normal(loc=0.7, scale=0.6, size=100000)
+    data1 = np.random.normal(loc=-1.3, scale=0.15, size=100000)
+    data2 = np.random.normal(loc=0.7, scale=0.65, size=100000)
 
     hrange = (-3, 3)
     nbins = 40
@@ -88,7 +88,7 @@ if __name__ == "__main__":
     H2 = LinHist(e2, h2)
     xhighres = np.linspace(*hrange, 1000)
 
-    alpha = 0.71
+    alpha = 0.4
     HI = interp_fast(H1, H2, alpha)
 
     plt.subplot(2, 1, 1)
