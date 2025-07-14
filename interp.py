@@ -24,11 +24,13 @@ def interp_fast(h1: LinHist, h2: LinHist, alpha: float) -> LinHist:
     cdf1 = h1.cdf()
     cdf2 = h2.cdf()
 
-    # Check whether cdf1 or cdf2 has more evenly distributed y values
-    # Use that histogram to obtain x1
+    # Check whether cdf1 or cdf2 has more evenly distributed y values Use that
+    # histogram to obtain x1, except if alpha is too close to H1, in which case
+    # we don't do this optimization in order to make sure that H_interp = H1
+    # and H2 when alpha is 0 and 1.
     quality_cdf1 = ((cdf1.y[1:] - cdf1.y[:-1])**2).sum()
     quality_cdf2 = ((cdf2.y[1:] - cdf2.y[:-1])**2).sum()
-    if quality_cdf1 > quality_cdf2:
+    if quality_cdf1 > quality_cdf2 and alpha >= 0.5:
         h1, h2 = h2, h1
         cdf1, cdf2 = cdf2, cdf1
         alpha = 1 - alpha
@@ -88,7 +90,7 @@ if __name__ == "__main__":
     H2 = LinHist(e2, h2)
     xhighres = np.linspace(*hrange, 1000)
 
-    alpha = 0.4
+    alpha = 0.6
     HI = interp_fast(H1, H2, alpha)
 
     plt.subplot(2, 1, 1)
@@ -100,7 +102,6 @@ if __name__ == "__main__":
     plt.legend(loc="upper right")
     # plt.plot(xhighres, HI.eval(xhighres), linewidth=0.5, color="k")
     plt.ylabel("Counts")
-
 
     plt.subplot(2, 1, 2)
     cdf1 = H1.cdf()
