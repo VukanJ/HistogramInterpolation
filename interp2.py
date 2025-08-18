@@ -1,5 +1,4 @@
 import numpy as np
-from matplotlib.widgets import Slider
 
 
 class LinHist:
@@ -49,25 +48,9 @@ def interp(h1: LinHist, h2: LinHist, alpha: float) -> LinHist:
 
     h3 = LinHist(xmid, ally * interp_area).derivative()
 
-    # plt.subplot(2, 1, 1)
-    # plt.step(h1.x, h1.y, where="mid", label="$H_1$")
-    # plt.step(h2.x, h2.y, where="mid", label="$H_2$")
-    # plt.step(h1.x, h3.eval(h1.x), where="mid", color="k", label=rf"$H_\text{{Interp}}(\alpha={alpha})$")
-    # plt.subplot(2, 1, 2)
-    # plt.plot(x1, ally, ".-", label="CDF1")
-    # plt.plot(x2, ally, ".-", label="CDF2")
-    # plt.plot(xmid, ally, ".-", label="CDF3")
-    # # plt.plot(x1, cdf1.eval(x1), ".-", label=f"Interpolated CDF (alpha={alpha})")
-    # # plt.plot(x1_2, cdf1.eval(x1_2), ".-", label=f"Interpolated CDF (alpha={alpha})")
-    # # plt.plot(x2, cdf2.eval(x2), label=f"Interpolated CDF (alpha={alpha})")
-
-    # plt.show()
-
     return LinHist(h1.x, h3.eval(h1.x))
     
     
-
-
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
     N = 100000
