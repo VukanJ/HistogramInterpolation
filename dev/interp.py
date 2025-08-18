@@ -10,17 +10,6 @@ class LinHist:
         cdf = np.cumsum(self.y)
         return LinHist(self.x, cdf / cdf[-1])
 
-    def inverse(self) -> "LinHist":
-        return LinHist(self.y, self.x)
-
-    def derivative(self) -> "LinHist":
-        dy = np.diff(self.y, prepend=0)
-        dx = np.diff(self.x, prepend=0)
-        return LinHist(self.x, dy / dx)
-
-    def area(self) -> float:
-        return np.sum(self.y * np.diff(self.x, prepend=0))
-
     def __len__(self) -> int:
         return len(self.x)
 
@@ -28,34 +17,65 @@ class LinHist:
         return np.interp(X, self.x, self.y)
 
 
-def interp(h1: LinHist, h2: LinHist, alpha: float) -> LinHist:
+def interp_fast(h1: LinHist, h2: LinHist, alpha: float) -> LinHist:
     assert len(h1) == len(h2)
     assert len(h1.x) == len(h2.x)
 
     cdf1 = h1.cdf()
     cdf2 = h2.cdf()
 
-    area1 = h1.area()
-    area2 = h2.area()
-    interp_area = (1 - alpha) * area1 + alpha * area2
+    # Check whether cdf1 or cdf2 has more evenly distributed y values Use that
+    # histogram to obtain x1, except if alpha is too close to H1, in which case
+    # we don't do this optimization in order to make sure that H_interp = H1
+    # and H2 when alpha is 0 and 1.
+    quality_cdf1 = ((cdf1.y[1:] - cdf1.y[:-1])**2).sum()
+    quality_cdf2 = ((cdf2.y[1:] - cdf2.y[:-1])**2).sum()
+    if quality_cdf1 > quality_cdf2 and alpha >= 0.5:
+        h1, h2 = h2, h1
+        cdf1, cdf2 = cdf2, cdf1
+        alpha = 1 - alpha
 
-    ally = np.sort(np.unique(np.concatenate((cdf1.y, cdf2.y))))
+    xspace = cdf1.x
 
-    x1 = cdf1.inverse().eval(ally)
-    x2 = cdf2.inverse().eval(ally)
+    x1 = h1.x
+    x2 = LinHist(cdf2.y, cdf2.x).eval(cdf1.y)
 
-    xmid = x1 * (1 - alpha) + alpha * x2
+    f1_x1 = LinHist(xspace, h1.y).eval(x1)
+    f2_x2 = LinHist(xspace, h2.y).eval(x2)
 
-    h3 = LinHist(xmid, ally * interp_area).derivative()
+    f = f1_x1 * f2_x2
+    D = (1.0 - alpha) * f2_x2 + alpha * f1_x1
+    D[D == 0] = 1
+    f /= D
+    return LinHist(x1 * (1-alpha) + alpha* x2, f)
 
-    return LinHist(h1.x, h3.eval(h1.x))
-    
-    
+# def interp_high_precision(h1: LinHist, h2: LinHist, alpha: float, precision=100) -> LinHist:
+#     assert len(h1) == len(h2)
+#     assert len(h1.x) == len(h2.x)
+
+#     cdf1 = h1.cdf()
+#     cdf2 = h2.cdf()
+
+#     yspace = np.linspace(0, 1, precision)
+#     xspace = np.linspace(h1.x[0], h1.x[-1], precision)
+
+#     x1 = LinHist(cdf1.y, cdf1.x).eval(yspace)
+#     x2 = LinHist(cdf2.y, cdf2.x).eval(yspace)
+
+#     f1_x1 = LinHist(xspace, h1.eval(xspace)).eval(x1)
+#     f2_x2 = LinHist(xspace, h2.eval(xspace)).eval(x2)
+
+#     f = f1_x1 * f2_x2
+#     D = (1.0 - alpha) * f2_x2 + alpha * f1_x1
+#     D[D == 0] = 1
+#     f /= D
+#     return LinHist(x1 * (1-alpha) + alpha* x2, f)
+
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
     N = 100000
     data1 = np.random.normal(loc=-1.3, scale=0.15, size=N)
-    data2 = np.random.normal(loc=0.7, scale=0.65, size=int(1.3*N))
+    data2 = np.random.normal(loc=0.7, scale=0.65, size=N)
 
     hrange = (-3, 3)
     nbins = 40
@@ -72,7 +92,7 @@ if __name__ == "__main__":
     xhighres = np.linspace(*hrange, 1000)
 
     alpha = 0.6
-    HI = interp(H1, H2, alpha)
+    HI = interp_fast(H1, H2, alpha)
 
     plt.subplot(2, 1, 1)
     plt.step(H1.x, H1.y, where="mid", label="$H_1$")
