@@ -57,8 +57,8 @@ def interp(h1: LinHist, h2: LinHist, alpha: float) -> LinHist:
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
     N = 100000
-    data1 = np.random.normal(loc=-1.3, scale=0.002, size=N)
-    data2 = np.random.normal(loc=0.7, scale=0.002, size=int(1.3*N))
+    data1 = np.random.normal(loc=-1.3, scale=0.1, size=N)
+    data2 = np.random.normal(loc=0.7, scale=0.2, size=int(1.3*N))
 
     hrange = (-3, 3)
     nbins = 40
