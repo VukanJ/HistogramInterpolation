@@ -39,23 +39,26 @@ def interp(h1: LinHist, h2: LinHist, alpha: float) -> LinHist:
     area2 = h2.area()
     interp_area = (1 - alpha) * area1 + alpha * area2
 
-    ally = np.sort(np.unique(np.concatenate((cdf1.y, cdf2.y))))
+    ally = np.sort(np.unique(np.concatenate((np.linspace(0, 1, 100), cdf1.y, cdf2.y))))
+
+    # if len(ally) < 10:
+    #     ally = np.linspace(0, 1, 101)
 
     x1 = cdf1.inverse().eval(ally)
     x2 = cdf2.inverse().eval(ally)
-
     xmid = x1 * (1 - alpha) + alpha * x2
 
-    h3 = LinHist(xmid, ally * interp_area).derivative()
+    h3y = LinHist(xmid, ally * interp_area).eval(h1.x)
+    h3 = LinHist(h1.x, h3y).derivative()
 
     return LinHist(h1.x, h3.eval(h1.x))
-    
-    
+
+
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
     N = 100000
-    data1 = np.random.normal(loc=-1.3, scale=0.15, size=N)
-    data2 = np.random.normal(loc=0.7, scale=0.65, size=int(1.3*N))
+    data1 = np.random.normal(loc=-1.3, scale=0.002, size=N)
+    data2 = np.random.normal(loc=0.7, scale=0.002, size=int(1.3*N))
 
     hrange = (-3, 3)
     nbins = 40
@@ -64,14 +67,14 @@ if __name__ == "__main__":
     h1 = np.array(h1, dtype=np.float32)
     h2 = np.array(h2, dtype=np.float32)
     bwidth = (hrange[1] - hrange[0]) / nbins
-    e1 = e1[:-1] + bwidth
-    e2 = e2[:-1] + bwidth
+    e1 = e1[:-1] + 0.5 * bwidth
+    e2 = e2[:-1] + 0.5 * bwidth
 
     H1 = LinHist(e1, h1)
     H2 = LinHist(e2, h2)
     xhighres = np.linspace(*hrange, 1000)
 
-    alpha = 0.6
+    alpha = 0.5
     HI = interp(H1, H2, alpha)
 
     plt.subplot(2, 1, 1)
